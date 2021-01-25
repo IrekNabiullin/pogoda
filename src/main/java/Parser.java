@@ -12,15 +12,29 @@ import java.util.regex.Pattern;
 
 public class Parser {
     public static void main(String[] args) throws Exception {
-        Document page = getPage();
+        Document page = getPage();  //запрашиваем страницу для парсинга. метод getPage() скачивает ее с сайта в виде объекта Document
+        // используеи css query language с помощью которого можем брать данные со страницы
         int index = 0;
+        // запрашиваем со страницы все tables, и в квадратных скобках указываем тип класса wt, который содердит нужную
+        // нам информацию о дате. Таких элементов может быть много, поэтому просим отдать нам первый .first();
         Element tableWth = page.select("table[class=wt]").first();
+
+        // System.out.println(tableWth); // мы можем вывести на экран эту таблицу tableWt в виде кода HTML
+        // и увидеть, что наша таблица содержит имена столбцов wth и значения valign
+
+        // далее забираем имена столбцов (столбцы в таблице это tr), имена столбцов  имеют аттрибут wth на странице сайта
+        // то есть из нашей таблицы мы выбираем только те trы, чей класс равен wth
         Elements names = tableWth.select("tr[class=wth]");
+
+        // теперь нам нужнополучить values.
+        // то есть из нашей таблицы мы выбираем только те trы, чей valign равен top
         Elements values = tableWth.select("tr[valign=top]");
 
+        // теперь выведем на экран таблицу со значениями погоды на каждую дату, на утро, день, вечер, ночь
+        // для этого делаем цикл и пробегаемся по names
         for (Element name : names) {
-            String dateString = name.select("th[id=dt]").text();
-            String date = getDateFromString(dateString);
+            String dateString = name.select("th[id=dt]").text(); //записываем в переменную date все, что лежит в блоке th c id=dt
+            String date = getDateFromString(dateString); // так как в переменной date содержится иная информация, нам нужно выдрать только дату, см. метод ниже
             System.out.println(date + "    Явления    Температура    Давление   Влажность    Ветер");
             int iterationCount = printPartValues(values, index);
             index += iterationCount;
@@ -34,12 +48,17 @@ public class Parser {
         return page;                                        // возвращаем код страницы в виде HTML, котрую будем потом парсить
     }
 
+    // pattern и matcher - механизм для того, тчобы искать нужную нам информацию в тексе
+    // pattern - это шаблон, который мы ищем
+    // matcher - ищет совпадения с паттерном
     private static Pattern pattern = Pattern.compile("\\d{2}\\.\\d{2}");
 
+    // метод для получения даты из строки с использованием регулярного выражения
     private static String getDateFromString(String stringDate) throws Exception {
+
         Matcher matcher = pattern.matcher(stringDate);
-        if (matcher.find()) {
-            return matcher.group();
+        if (matcher.find()) {  // если matcher нашел нужный результат, то говорим
+            return matcher.group(); // верни нужный результат. Команда matcher.group();
         }
         throw new Exception("Can't extract date from string");
     }
